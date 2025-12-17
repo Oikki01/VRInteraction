@@ -24,6 +24,8 @@ public class ScrewInteractable : MonoBehaviour
     private Vector3 m_RotateAxis;
     //当前工具
     private Transform m_CurTool;
+    //螺丝是否拆卸完成
+    private bool m_IsOverScrew = false;
 
     #endregion
 
@@ -57,7 +59,7 @@ public class ScrewInteractable : MonoBehaviour
     [Header("震动反馈")]
     public SteamVR_Action_Vibration Haptic;
 
-    [Header("旋转轴向")]
+    [Header("螺丝旋转轴向")]
     public RotateAxis RotateAxisType = RotateAxis.X;
 
     public bool IsTightened => currentDepth >= MaxDepth - 0.0001f;
@@ -86,10 +88,15 @@ public class ScrewInteractable : MonoBehaviour
     private void Update()
     {
         if (!controller) return;
+        //if (m_IsOverScrew)
+        //{
+        //    PlayHaptic(0.8f, 200f); // 强震动提示“卡住”
+        //    return;
+        //} 
 
         // ---------- 1. 对准检测 ----------
-        float dot = Vector3.Dot(controller.forward, transform.up);
-        if (dot < AlignDot) return;
+        //float dot = Vector3.Dot(controller.forward, transform.up);
+        //if (dot < AlignDot) return;
 
         // ---------- 2. 计算手柄旋转变化 ----------
         Quaternion delta = controller.rotation * Quaternion.Inverse(lastRotation);
@@ -99,7 +106,8 @@ public class ScrewInteractable : MonoBehaviour
         float axisDot = Vector3.Dot(axis, m_RotateAxis);
         float signedAngle = angle * Mathf.Sign(axisDot) * RotateSensitivity;
 
-        if (Mathf.Abs(signedAngle) < 0.1f) return;
+        if (Mathf.Abs(signedAngle) < 0.1f) 
+            return;
 
         // ---------- 3. 累计旋转角度（多圈） ----------
         angleAccumulator += signedAngle;
@@ -108,14 +116,15 @@ public class ScrewInteractable : MonoBehaviour
         Screw.Rotate(m_RotateAxis, signedAngle, Space.World);
 
         // ---------- 5. 根据旋转推进或拉出螺丝 ----------
+        //螺丝转一圈在unity世界中前进的距离
         float move = signedAngle / 360f * MovePerTurn;
+        //比如MovePerTurn = 0.01f则为前进1cm，MaxDepth = 0.02则需要两圈完成
         float nextDepth = Mathf.Clamp(currentDepth + move, MinDepth, MaxDepth);
 
         // 到达极限（拧到底 / 拆完）
         if (Mathf.Approximately(nextDepth, currentDepth))
         {
             PlayHaptic(0.8f, 200f); // 强震动提示“卡住”
-            OverScrew();
             return;
         }
 
