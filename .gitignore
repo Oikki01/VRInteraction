@@ -12,5 +12,5 @@ Library
 Logs
 obj
 Temp
-.vsconfig
-.csproj
+*.vsconfig
+*.csproj
