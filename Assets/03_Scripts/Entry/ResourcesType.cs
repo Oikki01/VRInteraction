@@ -1,0 +1,25 @@
+public enum ResourcesType
+{
+    [EnumMark("无类型")]
+    None,
+    [EnumMark("装备模型")]
+    EquipModel,
+    [EnumMark("工具模型")]
+    ToolModel,
+    [EnumMark("场景")]
+    Scene,
+    [EnumMark("图片")]
+    Picture,
+    [EnumMark("视频")]
+    Video,
+    [EnumMark("音频")]
+    Audio,
+    [EnumMark("文档")]
+    Document,
+    [EnumMark("特效")]
+    SpeciallyEffect,
+    [EnumMark("材质")]
+    Material,
+    [EnumMark("文件夹")]
+    Folder
+}
