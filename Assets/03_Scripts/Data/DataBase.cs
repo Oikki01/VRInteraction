@@ -8,14 +8,6 @@ public abstract class DataBase
 
     public string StepName;
 
-    public string ModelRemarkName;
-
-    public bool IsMoveCamera;
-
-    public Vector3 CameraPos;
-
-    public Vector3 CameraRot;
-
     public string ModelFullName;
 
     public string StepDescribe;
@@ -24,15 +16,19 @@ public abstract class DataBase
 
     public Color OutLineColor = Color.blue;
 
-    public bool OutLineFlash;
-
     public PerformBase Perform;
-
-    public Dictionary<string, PerformBase> ExtendActionDict;
 
     public int ToolId;
 
     public float DelayTime;
+
+    public float ZOffset;
+
+    public string MoveModelFullName;
+
+    public bool IsDoMove;
+
+    public bool IsScrew;
 
     public virtual string ToJson()
     {
@@ -42,10 +38,10 @@ public abstract class DataBase
     public void SetPerformFullName()
     {
         Perform.SetFullName(ModelFullName);
-        foreach (KeyValuePair<string, PerformBase> item in ExtendActionDict)
-        {
-            item.Value.SetFullName(item.Key);
-        }
+        //foreach (KeyValuePair<string, PerformBase> item in ExtendActionDict)
+        //{
+        //    item.Value.SetFullName(item.Key);
+        //}
     }
 
     public static T ToData<T>(string str) where T : DataBase

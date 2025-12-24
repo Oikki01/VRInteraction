@@ -28,25 +28,13 @@ public class UIStepListPanel : MonoBehaviour
     /// </summary>
     private List<UIStepItem> itemList = new List<UIStepItem>();
 
-    private ProcessManager processManager;
-
     #endregion
 
     #region Unity生命周期函数
 
     private void OnEnable()
-    {       
-        //流程管理器
-        GameObject processManagerGobj = new GameObject("ProcessManager");
-        processManagerGobj.name = "ProcessManager";
-        processManager = processManagerGobj.AddComponent<ProcessManager>();
-        QuoteResourcesManager quoteResourcesManager = processManagerGobj.AddComponent<QuoteResourcesManager>();
-        GameObject modelScreenPrefab = Resources.Load<GameObject>("Prefabs/ModelScreenCanvas");
-        VEMFacade.CurSubjectFolder = VEMFacade.VEMSimPlatformPath + "/Subject";
-        quoteResourcesManager.InitData(VEMFacade.CurSubjectFolder, modelScreenPrefab);
-        processManager.Init(VEMFacade.CurSubjectFolder);
+    {
         GameEvent.GameEventCenter.OnTaskProgressChanged.AddListener(OnTaskProgressChanged);
-        InitScrollView(ProcessManager.Instance.FlowDataList);
     }
 
     private void OnDisable()

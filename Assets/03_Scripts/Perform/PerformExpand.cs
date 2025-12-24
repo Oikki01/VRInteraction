@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -5,11 +6,11 @@ public static class PerformExpand
 {
     public static CarryOutBase Bind(Transform Partent, DataBase data, UnityAction<CarryOutBase> action)
     {
-        PerformTypeAttribute perform = data.Perform.GetPerform();
+        //PerformTypeAttribute perform = data.Perform.GetPerform();
         CarryOutBase carryOutBase = null;
-        carryOutBase = ((!(Partent == null)) ? ((CarryOutBase)Partent.Find(data.ModelFullName).gameObject.AddComponent(perform.PerformType)) : ((CarryOutBase)GameObject.Find(data.ModelFullName).AddComponent(perform.PerformType)));
-        carryOutBase.perform = ClassObjectExpand.JsonCopy(data.Perform);
-        action?.Invoke(carryOutBase);
+        //carryOutBase = ((!(Partent == null)) ? ((CarryOutBase)Partent.Find(data.ModelFullName).gameObject.AddComponent(perform.PerformType)) : ((CarryOutBase)GameObject.Find(data.ModelFullName).AddComponent(perform.PerformType)));
+        //carryOutBase.perform = ClassObjectExpand.JsonCopy(data.Perform);
+        //action?.Invoke(carryOutBase);
         return carryOutBase;
     }
 

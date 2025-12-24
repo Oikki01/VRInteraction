@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using CW.Common;
 using PaintCore;
+using System.Diagnostics;
 
 namespace PaintIn3D
 {
@@ -208,6 +209,7 @@ namespace PaintIn3D
 					{
                         //涂抹可以撤销
                         CwStateManager.PotentiallyStoreAllStates();
+
                         connector.SubmitPoint(gameObject, preview, priority, pressure, finalPosition, finalRotation, this);
 					}
 					else if (emit == EmitType.PointsOnUV)

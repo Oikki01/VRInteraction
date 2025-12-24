@@ -32,4 +32,9 @@ public class GlobalManager
     /// 工具操作类型
     /// </summary>
     public ToolInteratType ToolInteractionType = ToolInteratType.None;
+
+    /// <summary>
+    /// 当前步骤ID
+    /// </summary>
+    public int CurStepID;
 }

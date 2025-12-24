@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 using Valve.VR;
+using HighlightingSystem;
+using Unity.VisualScripting;
 
 //========================================
 //作    者:HJK
@@ -83,6 +82,17 @@ public class ScrewInteractable : MonoBehaviour
     public float SnapPosThreshold = 0.001f;  // 1mm 认为到位
     public float SnapAngleThreshold = 1f;    // 1° 认为稳定
 
+    [Header("初始化螺丝状态")]
+    public ScrewInitialState InitialState = ScrewInitialState.Installed;
+
+    public bool IsCompleted;
+
+    [Header("交互状态")]
+    [SerializeField]
+    private bool isInteractable = false;
+
+    public bool IsInteractable { get { return isInteractable; } set { isInteractable = value; } }
+
     public bool IsTightened => currentDepth >= MaxDepth - 0.0001f;
     public bool IsRemoved => currentDepth <= MinDepth + 0.0001f;
 
@@ -92,10 +102,21 @@ public class ScrewInteractable : MonoBehaviour
 
     private void Start()
     {
+        switch (InitialState)
+        {
+            case ScrewInitialState.Installed:
+                currentDepth = MaxDepth;   // 刚放进孔
+                break;
+
+            case ScrewInitialState.Tightened:
+                currentDepth = MinDepth;   // 已拧紧
+                break;
+        }
     }
 
     private void Update()
     {
+        if (!isInteractable) return;
         if (!controller) return;
         if (SnapStatus == SnapState.None)
             return;
@@ -106,6 +127,8 @@ public class ScrewInteractable : MonoBehaviour
             UpdateSnapDriver();
             return; // ❗吸附过程中，不允许拧
         }
+
+        if (!snapDriver) return;
 
         Quaternion targetRot =
            SnapTarget.rotation * ToolRotationOffset;
@@ -149,17 +172,47 @@ public class ScrewInteractable : MonoBehaviour
         }
 
         // ---------- 5. 允许后才真正旋转 ----------
-        Screw.Rotate(LocalAxis, signedAngle, Space.World);
-        Screw.position -= LocalAxis * move;
+        Vector3 worldAxis = Screw.TransformDirection(LocalAxis);
+
+        Screw.Rotate(worldAxis, signedAngle, Space.World);
+        Screw.position -= worldAxis * move;
 
         currentDepth = Mathf.Clamp(currentDepth + move, MinDepth, MaxDepth);
+        if (currentDepth == MinDepth)
+        {
+            MarkCompleted();
+        }
+        Debug.LogError(currentDepth);
 
         lastRotation = controller.rotation;
     }
 
+    private void OnEnable()
+    {
+        ScrewManager.Instance.Register(this);
+    }
+
+
+    private void OnDisable()
+    {
+        ScrewManager.Instance.Unregister(this);
+    }
     #endregion
 
     #region 私有函数/业务逻辑
+
+    private void MarkCompleted()
+    {
+        IsCompleted = true;
+        isInteractable = false;
+        Highlighter highlighter = GetComponent<Highlighter>();
+        if (highlighter != null)
+        {
+            highlighter.constant = false;
+            highlighter.tween = false;
+        }
+        ScrewManager.Instance.NotifyScrewCompleted();
+    }
 
     /// <summary>
     /// 震动
@@ -177,13 +230,6 @@ public class ScrewInteractable : MonoBehaviour
             amplitude,
             SteamVR_Input_Sources.Any
         );
-    }
-
-    //螺丝拆卸完毕
-    void OverScrew()
-    {
-        controller = null;
-        m_CurTool.GetComponent<AdsorptionTool>().OnRelease();
     }
 
     void UpdateSnapDriver()
@@ -246,6 +292,8 @@ public class ScrewInteractable : MonoBehaviour
     /// </summary>
     public void BeginScrew(Transform ctrl, Transform tool)
     {
+        if (!isInteractable) return;
+
         // 吸附上和正在吸附不执行
         if (SnapStatus != SnapState.None)
             return;
@@ -286,4 +334,10 @@ public enum SnapState
     None,        // 未吸附
     Snapping,   // 正在平滑吸附
     Locked      // 已吸附到位（允许拧）
+}
+
+public enum ScrewInitialState
+{
+    Installed,   // 已安装（未拧）
+    Tightened    // 已拧紧
 }

@@ -28,6 +28,11 @@ public class VRMenuCtrl : VRCtrlBase
     [SerializeField] private UIToolListPanel m_ToolListPanelPrefab;
 
     /// <summary>
+    /// 步骤列表
+    /// </summary>
+    [SerializeField] private UIStepListPanel m_StepListPanelPrefab;
+
+    /// <summary>
     /// 按钮名称字典
     /// </summary>
     [Header("生成按钮相关")]
@@ -46,7 +51,15 @@ public class VRMenuCtrl : VRCtrlBase
     /// <summary>
     /// 工具列表实例
     /// </summary>
-    private UIToolListPanel m_ToolListPanelInstace;
+    private UIToolListPanel m_ToolListPanelInstance;
+
+    /// <summary>
+    /// 步骤列表实例
+    /// </summary>
+    private UIStepListPanel m_SetpListPanelInstance;
+
+
+    private ProcessManager processManager;
 
     #endregion
 
@@ -65,12 +78,15 @@ public class VRMenuCtrl : VRCtrlBase
 
         m_BtnNameDict = new Dictionary<MenuBtnType, string>();
         m_BtnNameDict.Add(MenuBtnType.BtnToolList, "工具箱");
+        m_BtnNameDict.Add(MenuBtnType.BtnStepList, "步骤列表");
 
         m_BtnPosDict = new Dictionary<string, Vector3>();
-        m_BtnPosDict.Add("工具箱", new Vector3(0, 0, 0));
+        m_BtnPosDict.Add("工具箱", new Vector3(-147, 0, 0));
+        m_BtnPosDict.Add("步骤列表", new Vector3(-147, -110, 0));
 
         CreateVRUIMenu();
         CreateToolListPanel();
+        CreateStepListPanel();
 
         m_VRUIMenuInstance.SetOnClickCallBack(m_BtnNameDict, OnClickCallBack, m_BtnPosDict);
     }
@@ -102,21 +118,46 @@ public class VRMenuCtrl : VRCtrlBase
     protected override void ShowHideMenu()
     {
         ShowHideUI(m_VRUIMenuInstance.transform, "LeftCanvas", new Vector3(-6, 91, 134), new Vector3(62, 0, 0));
-        m_ToolListPanelInstace.gameObject.SetActive(false);
+        m_ToolListPanelInstance.gameObject.SetActive(false);
     }
 
     private void CreateToolListPanel()
     {
         //初始化工具数据
         DataManager.Instance.Init(VEMFacade.VEMSimPlatformPath);
-        m_ToolListPanelInstace = Instantiate(m_ToolListPanelPrefab, VRCanvas.transform);
-        m_ToolListPanelInstace.Init();
-        m_ToolListPanelInstace.gameObject.SetActive(false);
+        m_ToolListPanelInstance = Instantiate(m_ToolListPanelPrefab, VRCanvas.transform);
+        m_ToolListPanelInstance.Init();
+        m_ToolListPanelInstance.gameObject.SetActive(false);
+    }
+
+    private void CreateStepListPanel()
+    {
+        //初始化步骤列表数据
+        
+        //流程管理器
+        VEMFacade.CurTrainType = TrainType.Teach;
+        GameObject processManagerGobj = new GameObject("ProcessManager");
+        processManagerGobj.name = "ProcessManager";
+        processManager = processManagerGobj.AddComponent<ProcessManager>();
+        QuoteResourcesManager quoteResourcesManager = processManagerGobj.AddComponent<QuoteResourcesManager>();
+        GameObject modelScreenPrefab = Resources.Load<GameObject>("Prefabs/ModelScreenCanvas");
+        VEMFacade.CurSubjectFolder = VEMFacade.VEMSimPlatformPath + "/Subject";
+        quoteResourcesManager.InitData(VEMFacade.CurSubjectFolder, modelScreenPrefab);
+        processManager.Init(VEMFacade.CurSubjectFolder);
+
+        m_SetpListPanelInstance = Instantiate(m_StepListPanelPrefab, VRCanvas.transform);
+        m_SetpListPanelInstance.InitScrollView(ProcessManager.Instance.FlowDataList);
+        m_SetpListPanelInstance.gameObject.SetActive(false);
     }
 
     private void ShowHideToolListPanel()
     {
-        ShowHideUI(m_ToolListPanelInstace.transform, "LeftCanvas", new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        ShowHideUI(m_ToolListPanelInstance.transform, "LeftCanvas", new Vector3(-6, 91, 134), new Vector3(62, 0, 0));
+    }
+
+    private void ShowHideStepListPanel()
+    {
+        ShowHideUI(m_SetpListPanelInstance.transform, "LeftCanvas", new Vector3(-6, 91, 134), new Vector3(62, 0, 0));
     }
 
     private void OnClickCallBack(MenuBtnType menuBtnType)
@@ -124,6 +165,7 @@ public class VRMenuCtrl : VRCtrlBase
         switch (menuBtnType)
         {
             case MenuBtnType.BtnStepList:
+                ShowHideStepListPanel();
                 break;
             case MenuBtnType.BtnToolList:
                 ShowHideToolListPanel();

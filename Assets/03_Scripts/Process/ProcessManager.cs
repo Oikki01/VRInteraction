@@ -48,6 +48,9 @@ public class ProcessManager : MonoSingleton<ProcessManager>
     /// </summary>
     protected CarryOutBase curCarryOut;
 
+
+    protected CarryOutComponent curCarryOutComponent;
+
     /// <summary>
     /// 表现列表
     /// </summary>
@@ -91,13 +94,13 @@ public class ProcessManager : MonoSingleton<ProcessManager>
             }
 
             bool isHitTrue = false;
-            CarryOutBase carryOut = null;
+            CarryOutComponent carryOut = null;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit[] hitArr = Physics.RaycastAll(ray, 100);
             for (int i = 0; i < hitArr.Length; i++)
             {
                 Transform hitTrs = hitArr[i].collider.transform;
-                List<CarryOutBase> carryOutList = hitTrs.GetComponents<CarryOutBase>().ToList();
+                List<CarryOutComponent> carryOutList = hitTrs.GetComponents<CarryOutComponent>().ToList();
                 carryOut = carryOutList.Find((x) => x.StepID == flowDataList[CurStepIndex].StepId);
                 if (carryOut != null)
                 {
@@ -135,7 +138,7 @@ public class ProcessManager : MonoSingleton<ProcessManager>
 
         CurStepIndex = 0;
         //创建工具
-        CreateToolGobj();
+        //CreateToolGobj();
         ModelNodePerformPrepare();
     }
 
@@ -190,10 +193,11 @@ public class ProcessManager : MonoSingleton<ProcessManager>
     /// <summary>
     /// 步骤完成
     /// </summary>
-    private void StepComplete()
+    public void StepComplete()
     {
-        curCarryOut.HighLightOff(null);
-        Destroy(curCarryOut);
+        curCarryOutComponent.HighLightOff(null);
+        curCarryOutComponent.HighLightOff();
+        Destroy(curCarryOutComponent);
         CurStepIndex++;
         GameEventCenter.OnTaskProgressChanged.Invoke();
         GetNextStep();
@@ -222,7 +226,8 @@ public class ProcessManager : MonoSingleton<ProcessManager>
     private void ModelNodePerformPrepare()
     {
         FlowDataBase flowData = flowDataList[CurStepIndex];
-        GameObject gObj = GameObject.Find(flowData.ModelFullName);
+        string[] str = flowData.ModelFullName.Split(";");
+        GameObject gObj = GameObject.Find(str[0]);
         if (gObj == null)
         {
             Debug.Log("找不到模型节点：" + flowData.ModelFullName);
@@ -231,33 +236,43 @@ public class ProcessManager : MonoSingleton<ProcessManager>
 
         if (flowData.control == ControlType.SimulationStep)
         {
-            PerformExpand.Bind(null, flowData, (action) =>
-            {
-                BindCallback(flowData, action);
-                curCarryOut = action;
-                //工具绑定脚本
-                ToolInfoData toolInfoData = DataManager.Instance.GetToolInfoById(flowData.ToolId);
-                if (toolInfoData != null && toolGobjDict.ContainsKey(toolInfoData))
-                {
-                    GameObject curToolGojb = toolGobjDict[toolInfoData];
-                    curToolGojb.SetActive(true);
+            //PerformExpand.Bind(null, flowData, (action) =>
+            //{
+            //    BindCallback(flowData, action);
+            //    curCarryOut = action;
+            //    //工具绑定脚本
+            //    //ToolInfoData toolInfoData = DataManager.Instance.GetToolInfoById(flowData.ToolId);
+            //    //if (toolInfoData != null && toolGobjDict.ContainsKey(toolInfoData))
+            //    //{
+            //    //    GameObject curToolGojb = toolGobjDict[toolInfoData];
+            //    //    curToolGojb.SetActive(true);
 
-                    ToolCarryOutComponent toolCarryOutComponent =
-                        (curToolGojb.GetOrAddComponent(VEMAssemblyManager.Instance.VEM_CarryOut_Assembly.GetType(toolInfoData.ClassFullName)) as ToolCarryOutComponent);
-                    toolCarryOutComponent.ID = flowData.ToolId;
-                    toolCarryOutComponent.BindPart(gObj.GetComponent<PartCarryOutComponent>());
-                    toolCarryOutComponent.Init(null);
-                    toolCarryOutComponent.AdsorbentCorrectionPosition(null);
-                }
-            });
+            //    //    ToolCarryOutComponent toolCarryOutComponent =
+            //    //        (curToolGojb.GetOrAddComponent(VEMAssemblyManager.Instance.VEM_CarryOut_Assembly.GetType(toolInfoData.ClassFullName)) as ToolCarryOutComponent);
+            //    //    toolCarryOutComponent.ID = flowData.ToolId;
+            //    //    toolCarryOutComponent.BindPart(gObj.GetComponent<PartCarryOutComponent>());
+            //    //    toolCarryOutComponent.Init(null);
+            //    //    toolCarryOutComponent.AdsorbentCorrectionPosition(null);
+            //    //}
+            //});
+
+            //添加触摸脚本、碰撞、高亮等
+            curCarryOutComponent = gObj.AddComponent<CarryOutComponent>();
+            curCarryOutComponent.ModelFullName = flowData.ModelFullName;
+            curCarryOutComponent.StepID = flowData.StepId;
+            curCarryOutComponent.ZOffset = flowData.ZOffset;
+            curCarryOutComponent.MoveModelFullName = flowData.MoveModelFullName;
+            curCarryOutComponent.IsDoMove = flowData.IsDoMove;
+            curCarryOutComponent.IsScrew = flowData.IsScrew;
+            curCarryOutComponent.Init();
         }
 
-        if (curCarryOut)
+        if (curCarryOutComponent)
         {
-            curCarryOut.SetCollider(true, null);
+            curCarryOutComponent.SetCollider(true, null);
             if (VEMFacade.CurTrainType == TrainType.Teach)
             {
-                curCarryOut.HighLightFlash(Color.blue, Color.red, null);
+                curCarryOutComponent.HighLightFlash(Color.blue, Color.red, null);
             }
         }
     }
@@ -289,19 +304,19 @@ public class ProcessManager : MonoSingleton<ProcessManager>
         }
 
         //联动对象脚本绑定
-        if (flowData.ExtendActionDict != null)
-        {
-            foreach (var data in flowData.ExtendActionDict)
-            {
-                PerformExpand.Bind(null, data.Key, data.Value, (extendCarryOut) =>
-                {
-                    extendCarryOut.IsExtend = true;
-                    extendCarryOut.Init(null);
-                    carryOut.LinksCarryOut.Add(extendCarryOut);
-                    carryOutList.Add(extendCarryOut);
-                });
-            }
-        }
+        //if (flowData.ExtendActionDict != null)
+        //{
+        //    foreach (var data in flowData.ExtendActionDict)
+        //    {
+        //        PerformExpand.Bind(null, data.Key, data.Value, (extendCarryOut) =>
+        //        {
+        //            extendCarryOut.IsExtend = true;
+        //            extendCarryOut.Init(null);
+        //            carryOut.LinksCarryOut.Add(extendCarryOut);
+        //            carryOutList.Add(extendCarryOut);
+        //        });
+        //    }
+        //}
     }
 
     /// <summary>
@@ -384,7 +399,7 @@ public class ProcessManager : MonoSingleton<ProcessManager>
     /// </summary>
     /// <param name="isHitTrue"></param>
     /// <param name="carryOut"></param>
-    private void HitModel(bool isHitTrue, CarryOutBase carryOut)
+    public void HitModel(bool isHitTrue, CarryOutComponent carryOut)
     {
         Debug.Log("点击到物体 == " + carryOut.transform.name);
         carryOut.Play(StepComplete);

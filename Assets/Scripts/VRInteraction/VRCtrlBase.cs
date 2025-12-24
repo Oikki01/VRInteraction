@@ -28,7 +28,7 @@ public class VRCtrlBase : MonoBehaviour
 
     protected virtual void Update()
     {
-	    if (ViveInput.GetPressDownEx(HandRole.LeftHand, ControllerButton.BKeyTouch))
+	    if (ViveInput.GetPressDownEx(HandRole.LeftHand, ControllerButton.BKeyTouch) || ViveInput.GetPressDownEx(HandRole.LeftHand, ControllerButton.Menu))
 	    {
 		    //菜单面板
 		    Debug.Log("左手 Y 键按下");
@@ -41,7 +41,7 @@ public class VRCtrlBase : MonoBehaviour
 		    Debug.Log("左手 X 键按下");
 	    }
 	    
-	    if (ViveInput.GetPressDownEx(HandRole.RightHand, ControllerButton.BKeyTouch))
+	    if (ViveInput.GetPressDownEx(HandRole.RightHand, ControllerButton.BKeyTouch) || ViveInput.GetPressDownEx(HandRole.RightHand, ControllerButton.Menu))
 	    {
 		    //工具放下 显示手势
 		    Debug.Log("右手 B 键按下");

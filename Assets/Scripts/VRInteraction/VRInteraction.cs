@@ -36,6 +36,8 @@ public class VRInteraction : VRCtrlBase
     public float RayDistance = 2f;
     public LayerMask DetectLayer;
 
+    public GameObject RightHandModel;
+
     #endregion
 
     #region Mono相关
@@ -57,10 +59,21 @@ public class VRInteraction : VRCtrlBase
 
     protected override void DropDownTool()
     {
+        if (GlobalManager.Instance.ToolInteractionType == ToolInteratType.Paint)
+        {
+            if (ProcessManager.Instance.FlowDataList[ProcessManager.Instance.CurStepIndex].StepId == GlobalManager.Instance.CurStepID)
+            {
+                ProcessManager.Instance.StepComplete();
+            }
+        }
+        GlobalManager.Instance.ToolInteractionType = ToolInteratType.None;
         GlobalManager.Instance.OperationType = OperationType.None;
         //放下工具
         if (m_ToolInstance != null)
+        {
+            RightHandModel.SetActive(true);
             m_ToolInstance.SetActive(false);
+        }
     }
 
     protected override void HoldRightTrigger()
@@ -96,40 +109,7 @@ public class VRInteraction : VRCtrlBase
 
     protected override void PressDownRightTrigger()
     {
-        if (GlobalManager.Instance.OperationType == OperationType.None)
-            CheckTrigger(ViveRoleProperty.New(HandRole.RightHand), RightDeviceTracker);
-    }
 
-    void CheckTrigger(ViveRoleProperty handRole, Transform handTrans)
-    {
-        // Trigger 按下瞬间
-        if (ViveInput.GetPressDown(handRole, ControllerButton.Trigger))
-        {
-            if (!handTrans) return;
-
-            // 用射线找物体
-            if (Physics.Raycast(
-                handTrans.position,
-                handTrans.forward,
-                out RaycastHit hit,
-                RayDistance,
-                DetectLayer))
-            {
-                Debug.Log(
-                    $"[{handRole.roleValue}] Trigger Press Down → {hit.collider.gameObject.name}"
-                );
-                if (hit.collider.gameObject.GetComponent<Animator>())
-                {
-                    hit.collider.gameObject.GetComponent<Animator>().SetBool("IsMerge", true);
-                }
-            }
-            else
-            {
-                Debug.Log(
-                    $"[{handRole.roleValue}] Trigger Press Down → Nothing"
-                );
-            }
-        }
     }
     #endregion
 
@@ -142,6 +122,7 @@ public class VRInteraction : VRCtrlBase
         GlobalManager.Instance.ToolInteractionType = ToolInteratType.Interact;
         m_ToolInstance = InteractTool;
         InteractTool.SetActive(true);
+        RightHandModel.SetActive(false);
     }
 
     public void CreatePaintTool()
@@ -151,6 +132,7 @@ public class VRInteraction : VRCtrlBase
         GlobalManager.Instance.ToolInteractionType = ToolInteratType.Paint;
         m_ToolInstance = PaintTool;
         PaintTool.SetActive(true);
+        RightHandModel.SetActive(false);
     }
 
     #endregion
