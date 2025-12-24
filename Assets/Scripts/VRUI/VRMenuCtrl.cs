@@ -79,10 +79,12 @@ public class VRMenuCtrl : VRCtrlBase
         m_BtnNameDict = new Dictionary<MenuBtnType, string>();
         m_BtnNameDict.Add(MenuBtnType.BtnToolList, "工具箱");
         m_BtnNameDict.Add(MenuBtnType.BtnStepList, "步骤列表");
+        m_BtnNameDict.Add(MenuBtnType.BtnExit, "退出");
 
         m_BtnPosDict = new Dictionary<string, Vector3>();
         m_BtnPosDict.Add("工具箱", new Vector3(-147, 0, 0));
         m_BtnPosDict.Add("步骤列表", new Vector3(-147, -110, 0));
+        m_BtnPosDict.Add("退出", new Vector3(-147, -220, 0));
 
         CreateVRUIMenu();
         CreateToolListPanel();
@@ -93,7 +95,7 @@ public class VRMenuCtrl : VRCtrlBase
 
     private void Start()
     {
-        
+
     }
 
     protected override void Update()
@@ -133,7 +135,7 @@ public class VRMenuCtrl : VRCtrlBase
     private void CreateStepListPanel()
     {
         //初始化步骤列表数据
-        
+
         //流程管理器
         VEMFacade.CurTrainType = TrainType.Teach;
         GameObject processManagerGobj = new GameObject("ProcessManager");
@@ -169,6 +171,9 @@ public class VRMenuCtrl : VRCtrlBase
                 break;
             case MenuBtnType.BtnToolList:
                 ShowHideToolListPanel();
+                break;
+            case MenuBtnType.BtnExit:
+                Application.Quit();
                 break;
         }
     }

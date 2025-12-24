@@ -38,7 +38,9 @@ public enum ToolInteratType
 
 public enum MenuBtnType
 {
-   [EnumMark("步骤列表")] BtnStepList,
+    [EnumMark("步骤列表")] BtnStepList,
 
-   [EnumMark("工具列表")] BtnToolList
+    [EnumMark("工具列表")] BtnToolList,
+
+    [EnumMark("退出")] BtnExit,
 }
